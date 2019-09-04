@@ -534,7 +534,7 @@ class PrioritizationEngine(models.TransientModel):
         # get team id
         crm_team = self.env['crm.team'].search([('team_type', '=', 'engine')])
 
-        sale_orders = self.env['sale.order'].search([('state', 'in', ('engine', 'sent')), ('team_id', '=', crm_team['id'])])
+        sale_orders = self.env['sale.order'].search([('state', 'in', ('engine', 'sent', 'void')), ('team_id', '=', crm_team['id'])])
 
         for sale_order in sale_orders:
             _logger.info('sale order name : %r, partner_id : %r, create_date: %r', sale_order['name'], sale_order['partner_id'].id, sale_order['create_date'])
@@ -558,11 +558,12 @@ class PrioritizationEngine(models.TransientModel):
                         # calculate datetime difference.
                         duration = current_datetime - create_date  # For build-in functions
                         duration_in_hours = self.return_duration_in_hours(duration)
-                    if _setting_object and int(_setting_object.length_of_hold) <= int(duration_in_hours):
-                        _logger.info('call stock_move._do_unreserve()')
-                        stock_move._do_unreserve()
-                    else:
-                        _logger.info('Product is in length of hold, unable to release quantity.')
+
+                        if _setting_object and int(_setting_object.length_of_hold) <= int(duration_in_hours):
+                            _logger.info('call stock_move._do_unreserve()')
+                            stock_move._do_unreserve()
+                        else:
+                            _logger.info('Product is in length of hold, unable to release quantity.')
 
             self.change_sale_order_state(sale_order)
 
